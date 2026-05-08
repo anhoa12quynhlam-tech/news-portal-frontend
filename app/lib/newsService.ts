@@ -34,7 +34,7 @@ interface DetailApiResponse {
 }
 
 // Backend API URL - Thay đổi nếu backend chạy ở port khác
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
 // Mock data - fallback nếu API không hoạt động
 let mockNewsData: NewsItem[] = [];
