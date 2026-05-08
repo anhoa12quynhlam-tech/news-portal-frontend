@@ -61,7 +61,7 @@ export default function Home() {
         loadSearch(searchParam, 1);
       }
     } else {
-      if (categoryParam !== activeCategory) {
+      if (isSearching || searchQuery || categoryParam !== activeCategory) {
         setActiveCategory(categoryParam);
         setSearchQuery("");
         setIsSearching(false);
@@ -71,7 +71,7 @@ export default function Home() {
         loadNews(1, categoryParam);
       }
     }
-  }, [searchParams, mounted]);
+  }, [searchParams, mounted, isSearching, searchQuery, activeCategory]);
 
   // Load news function
   const loadNews = async (pageNum: number, category: string) => {
