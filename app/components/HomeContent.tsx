@@ -51,7 +51,7 @@ export default function Home() {
     const searchParam = searchParams.get("search") || "";
 
     if (searchParam) {
-      if (searchParam !== searchQuery) {
+      if (searchParam !== searchQuery || !isSearching) {
         setSearchQuery(searchParam);
         setIsSearching(true);
         setActiveCategory("all");
@@ -61,6 +61,8 @@ export default function Home() {
         loadSearch(searchParam, 1);
       }
     } else {
+      // Quan trọng: reset cả khi vừa thoát khỏi search,
+      // không chỉ khi category thay đổi.
       if (isSearching || searchQuery || categoryParam !== activeCategory) {
         setActiveCategory(categoryParam);
         setSearchQuery("");
