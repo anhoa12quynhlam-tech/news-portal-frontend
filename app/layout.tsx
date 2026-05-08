@@ -20,13 +20,13 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "News Portal - Latest News & Updates",
+  title: "NewsHub - Tóm tắt thông tin -Giải trí",
   description:
     "Stay informed with the latest news from around the world. Breaking news, sports, business, politics, and more.",
   keywords:
     "news, breaking news, latest news, world news, sports, business, politics",
   openGraph: {
-    title: "News Portal - Latest News & Updates",
+    title: "NewsHub - Latest News & Updates",
     description: "Stay informed with the latest news from around the world",
     type: "website",
     locale: "en_US",
