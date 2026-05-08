@@ -7,6 +7,7 @@ import { Toaster } from "./components/ui/sonner";
 import ErrorBoundary from "./components/ErrorBoundary";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
+import { Suspense } from "react";
 
 const geist = Geist({
   variable: "--font-geist-sans",
@@ -49,7 +50,9 @@ export default function RootLayout({
           <ThemeProvider defaultTheme="light" switchable={true}>
             <TooltipProvider>
               <Toaster />
-              <Header />
+              <Suspense fallback={null}>
+                <Header />
+              </Suspense>
               {children}
               <Footer />
             </TooltipProvider>
