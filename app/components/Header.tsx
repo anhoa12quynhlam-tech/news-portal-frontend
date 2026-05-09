@@ -18,40 +18,15 @@ export default function Header({
 }: HeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+
   const { theme, toggleTheme, switchable } = useTheme();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const currentCategory = searchParams.get("category") || "all";
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      if (onSearchChange) {
-        onSearchChange(searchQuery);
-      }
-      // Optionally navigate to search results
-      router.push(`/?search=${encodeURIComponent(searchQuery)}`);
-    }
-  };
-
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const query = e.target.value;
-    setSearchQuery(query);
-  };
-
-  const handleCategoryClick = (categoryId: string) => {
-    setIsMenuOpen(false);
-    setSearchQuery("");
-    if (onCategoryChange) {
-      onCategoryChange(categoryId);
-    }
-    // Navigate to category
-    if (categoryId === "all") {
-      router.push("/");
-    } else {
-      router.push(`/?category=${categoryId}`);
-    }
-  };
+  const currentSearch = searchParams.get("search") || "";
+  const currentCategory = currentSearch
+    ? ""
+    : searchParams.get("category") || "all";
 
   const navigationItems = [
     { id: "all", label: "Tất Cả" },
@@ -62,6 +37,43 @@ export default function Header({
     { id: "humor", label: "Hài Hước" },
   ];
 
+  const getCategoryHref = (categoryId: string) => {
+    return categoryId === "all" ? "/" : `/?category=${categoryId}`;
+  };
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const trimmedQuery = searchQuery.trim();
+
+    if (!trimmedQuery) return;
+
+    setIsMenuOpen(false);
+
+    if (onSearchChange) {
+      onSearchChange(trimmedQuery);
+    }
+
+    router.push(`/?search=${encodeURIComponent(trimmedQuery)}`);
+  };
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+  };
+
+  const handleCategoryClick = (categoryId: string) => {
+    setIsMenuOpen(false);
+    setSearchQuery("");
+
+    if (onCategoryChange) {
+      onCategoryChange(categoryId);
+    }
+
+    // Không gọi router.push ở đây.
+    // Link href sẽ tự điều hướng để tránh double navigation
+    // và tránh lỗi bị kẹt sau khi reload tại URL search.
+  };
+
   const handleLogoClick = () => {
     setSearchQuery("");
     setIsMenuOpen(false);
@@ -70,12 +82,11 @@ export default function Header({
       onCategoryChange("all");
     }
 
-    router.push("/");
-
-    // 👉 Scroll lên đầu trang
+    // Không gọi router.push("/") ở đây.
+    // Link href="/" đã xử lý điều hướng.
     window.scrollTo({
       top: 0,
-      behavior: "smooth", // có thể bỏ nếu muốn scroll ngay lập tức
+      behavior: "smooth",
     });
   };
 
@@ -121,6 +132,7 @@ export default function Header({
               <button
                 type="submit"
                 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                aria-label="Search"
               >
                 <Search size={20} />
               </button>
@@ -135,6 +147,7 @@ export default function Header({
                 onClick={toggleTheme}
                 className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                 aria-label="Toggle theme"
+                type="button"
               >
                 {theme === "light" ? (
                   <Moon
@@ -149,9 +162,10 @@ export default function Header({
 
             {/* Mobile Menu Toggle */}
             <button
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              onClick={() => setIsMenuOpen((prev) => !prev)}
               className="md:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
               aria-label="Toggle menu"
+              type="button"
             >
               {isMenuOpen ? (
                 <X size={24} className="text-gray-900 dark:text-white" />
@@ -165,8 +179,9 @@ export default function Header({
         {/* Navigation Bar - Desktop */}
         <nav className="hidden md:flex items-center gap-1 pb-0 overflow-x-auto">
           {navigationItems.map((item) => (
-            <button
+            <Link
               key={item.id}
+              href={getCategoryHref(item.id)}
               onClick={() => handleCategoryClick(item.id)}
               className={`px-4 py-3 text-sm font-semibold whitespace-nowrap border-b-2 transition-all duration-200 ${
                 currentCategory === item.id
@@ -175,7 +190,7 @@ export default function Header({
               }`}
             >
               {item.label}
-            </button>
+            </Link>
           ))}
         </nav>
 
@@ -195,6 +210,7 @@ export default function Header({
                 <button
                   type="submit"
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                  aria-label="Search"
                 >
                   <Search size={20} />
                 </button>
@@ -204,8 +220,9 @@ export default function Header({
             {/* Mobile Navigation */}
             <nav className="flex flex-col gap-2">
               {navigationItems.map((item) => (
-                <button
+                <Link
                   key={item.id}
+                  href={getCategoryHref(item.id)}
                   onClick={() => handleCategoryClick(item.id)}
                   className={`px-4 py-2 text-sm font-semibold rounded-lg transition-colors text-left ${
                     currentCategory === item.id
@@ -214,7 +231,7 @@ export default function Header({
                   }`}
                 >
                   {item.label}
-                </button>
+                </Link>
               ))}
             </nav>
           </div>
