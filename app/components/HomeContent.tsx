@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import NewsCard from "@/components/NewsCard";
 import LoadingCard from "@/components/LoadingCard";
@@ -19,70 +19,53 @@ export default function Home() {
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [hasMore, setHasMore] = useState(true);
   const [mounted, setMounted] = useState(false);
+  const requestIdRef = useRef(0);
 
-  // Load initial data on mount
+  // Mark mounted to avoid hydration mismatch
   useEffect(() => {
     setMounted(true);
-    const categoryParam = searchParams.get("category") || "all";
-    const searchParam = searchParams.get("search") || "";
+  }, []);
 
-    if (searchParam) {
-      setSearchQuery(searchParam);
-      setIsSearching(true);
-      setActiveCategory("all");
-      setNews([]);
-      setPage(1);
-      setIsInitialLoading(true);
-      loadSearch(searchParam, 1);
-    } else {
-      setActiveCategory(categoryParam);
-      setNews([]);
-      setPage(1);
-      setIsInitialLoading(true);
-      loadNews(1, categoryParam);
-    }
-  }, []); // Only run once on mount
-
-  // Listen to URL parameters changes
+  // Keep UI state strictly in sync with URL parameters.
   useEffect(() => {
     if (!mounted) return;
 
     const categoryParam = searchParams.get("category") || "all";
     const searchParam = searchParams.get("search") || "";
 
-    if (searchParam) {
-      if (searchParam !== searchQuery || !isSearching) {
-        setSearchQuery(searchParam);
-        setIsSearching(true);
-        setActiveCategory("all");
-        setNews([]);
-        setPage(1);
-        setIsInitialLoading(true);
-        loadSearch(searchParam, 1);
-      }
+    requestIdRef.current += 1;
+    const requestId = requestIdRef.current;
+
+    setNews([]);
+    setPage(1);
+    setHasMore(true);
+    setIsInitialLoading(true);
+
+    if (searchParam.trim()) {
+      setSearchQuery(searchParam);
+      setIsSearching(true);
+      setActiveCategory("all");
+      loadSearch(searchParam, 1, requestId);
     } else {
-      // Quan trọng: reset cả khi vừa thoát khỏi search,
-      // không chỉ khi category thay đổi.
-      if (isSearching || searchQuery || categoryParam !== activeCategory) {
-        setActiveCategory(categoryParam);
-        setSearchQuery("");
-        setIsSearching(false);
-        setNews([]);
-        setPage(1);
-        setIsInitialLoading(true);
-        loadNews(1, categoryParam);
-      }
+      setSearchQuery("");
+      setIsSearching(false);
+      setActiveCategory(categoryParam);
+      loadNews(1, categoryParam, requestId);
     }
-  }, [searchParams, mounted, isSearching, searchQuery, activeCategory]);
+  }, [searchParams, mounted]);
 
   // Load news function
-  const loadNews = async (pageNum: number, category: string) => {
-    if (isLoading) return;
+  const loadNews = async (
+    pageNum: number,
+    category: string,
+    requestId?: number,
+  ) => {
+    if (isLoading && pageNum !== 1) return;
 
     setIsLoading(true);
     try {
       const result = await fetchNews(category, pageNum, 6);
-      console.log("RESULT:", result);
+      if (requestId && requestId !== requestIdRef.current) return;
 
       if (!result || !Array.isArray(result.news)) {
         console.error("Invalid API response:", result);
@@ -108,13 +91,17 @@ export default function Home() {
   };
 
   // Search news function
-  const loadSearch = async (query: string, pageNum: number) => {
-    if (isLoading || !query.trim()) return;
+  const loadSearch = async (
+    query: string,
+    pageNum: number,
+    requestId?: number,
+  ) => {
+    if ((isLoading && pageNum !== 1) || !query.trim()) return;
 
     setIsLoading(true);
     try {
       const result = await searchNews(query, pageNum, 6);
-      console.log("SEARCH RESULT:", result);
+      if (requestId && requestId !== requestIdRef.current) return;
 
       if (!result || !Array.isArray(result.news)) {
         console.error("Invalid search response:", result);
