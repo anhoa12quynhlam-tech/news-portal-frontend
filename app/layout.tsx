@@ -8,6 +8,7 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 import { Suspense } from "react";
+import ReloadToHome from "@/components/ReloadToHome";
 
 const geist = Geist({
   variable: "--font-geist-sans",
@@ -50,6 +51,7 @@ export default function RootLayout({
           <ThemeProvider defaultTheme="light" switchable={true}>
             <TooltipProvider>
               <Toaster />
+              <ReloadToHome />
               <Suspense fallback={null}>
                 <Header />
               </Suspense>
