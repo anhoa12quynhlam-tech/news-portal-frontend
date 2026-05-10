@@ -1,13 +1,8 @@
-// app/components/ReloadToHome.tsx
 "use client";
 
 import { useEffect } from "react";
-import { usePathname, useSearchParams } from "next/navigation";
 
 export default function ReloadToHome() {
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-
   useEffect(() => {
     if (typeof window === "undefined") return;
 
@@ -16,13 +11,14 @@ export default function ReloadToHome() {
       | undefined;
 
     const isReload = navigationEntry?.type === "reload";
-    const hasSearchParams = searchParams.toString().length > 0;
-    const isHomeUrl = pathname === "/" && !hasSearchParams;
+
+    const isHomeUrl =
+      window.location.pathname === "/" && window.location.search === "";
 
     if (isReload && !isHomeUrl) {
       window.location.replace("/");
     }
-  }, [pathname, searchParams]);
+  }, []);
 
   return null;
 }
