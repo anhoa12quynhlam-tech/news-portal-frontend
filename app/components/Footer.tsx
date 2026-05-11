@@ -4,9 +4,12 @@ import { useState, useEffect } from "react";
 import { ChevronUp, Share2, MessageCircle, Send } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
+import { useLanguage } from "@/contexts/LanguageContext";
+
 export default function Footer() {
   const [isExpanded, setIsExpanded] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const { t } = useLanguage();
 
   // Ensure component only renders on client side
   useEffect(() => {
@@ -65,7 +68,7 @@ export default function Footer() {
                     © 2026 qHAL Studio
                   </p>
                   <p className="text-xs text-gray-600 dark:text-gray-400">
-                    News Portal - Stay Informed
+                    {t("stayInformed")}
                   </p>
                 </div>
               </div>
@@ -73,7 +76,7 @@ export default function Footer() {
               {/* Contact Info */}
               <div className="flex flex-col gap-2">
                 <p className="text-sm text-gray-700 dark:text-gray-300">
-                  <span className="font-semibold">Contact:</span>
+                  <span className="font-semibold">{t("contact")}:</span>
                 </p>
                 <a
                   href="mailto:anhoa12quynhlam@gmail.com"
@@ -114,25 +117,25 @@ export default function Footer() {
                   href="#"
                   className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
                 >
-                  About Us
+                  {t("aboutUs")}
                 </Link>
                 <Link
                   href="#"
                   className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
                 >
-                  Privacy Policy
+                  {t("privacyPolicy")}
                 </Link>
                 <Link
                   href="#"
                   className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
                 >
-                  Terms of Service
+                  {t("termsOfService")}
                 </Link>
                 <Link
                   href="#"
                   className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
                 >
-                  Contact
+                  {t("contact")}
                 </Link>
               </div>
             </div>
@@ -148,8 +151,8 @@ export default function Footer() {
             ? "bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700"
             : "bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700"
         }`}
-        aria-label={isExpanded ? "Hide footer" : "Show footer"}
-        title={isExpanded ? "Hide footer" : "Show footer"}
+        aria-label={isExpanded ? t("hideFooter") : t("showFooter")}
+        title={isExpanded ? t("hideFooter") : t("showFooter")}
       >
         <ChevronUp
           size={20}
@@ -157,7 +160,7 @@ export default function Footer() {
             isExpanded ? "rotate-0" : "rotate-180"
           }`}
         />
-        <span className="text-sm">{isExpanded ? "Hide" : "Footer"}</span>
+        <span className="text-sm">{isExpanded ? t("hide") : t("footer")}</span>
       </button>
 
       {/* Spacer - để tránh content bị che bởi footer */}

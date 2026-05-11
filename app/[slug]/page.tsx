@@ -8,6 +8,7 @@ import { extractIdFromSlug } from "@/lib/slug";
 import ImageGallery from "@/components/ImageGallery";
 import LoadingCard from "@/components/LoadingCard";
 import Link from "next/link";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface NewsItem {
   id: number;
@@ -25,12 +26,13 @@ interface NewsItem {
 export default function NewsDetailPage() {
   const params = useParams();
   const slug = params?.slug as string;
+  const { language, t, locale, isReady } = useLanguage();
   const [news, setNews] = useState<NewsItem | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!slug) return;
+    if (!slug || !isReady) return;
 
     const loadNewsDetail = async () => {
       try {
@@ -41,34 +43,34 @@ export default function NewsDetailPage() {
         const id = extractIdFromSlug(slug as string);
         
         if (!id) {
-          setError("Invalid article URL");
+          setError(t("invalidArticleUrl"));
           return;
         }
 
-        const result = await fetchNewsDetail(id);
+        const result = await fetchNewsDetail(id, language);
 
         if (!result) {
-          setError("Không tìm thấy bài viết");
+          setError(t("articleNotFound"));
           return;
         }
 
         setNews(result);
       } catch (err) {
         console.error("Error loading news detail:", err);
-        setError("Lỗi khi tải bài viết");
+        setError(t("articleLoadError"));
       } finally {
         setIsLoading(false);
       }
     };
 
     loadNewsDetail();
-  }, [slug]);
+  }, [slug, language, isReady, t]);
 
   // Format date
   const formatDate = (dateString: string) => {
     try {
       const date = new Date(dateString);
-      return date.toLocaleDateString("vi-VN", {
+      return date.toLocaleDateString(locale, {
         year: "numeric",
         month: "long",
         day: "numeric",
@@ -100,14 +102,14 @@ export default function NewsDetailPage() {
         <main className="container mx-auto px-4 py-8">
           <div className="text-center py-12">
             <p className="text-lg text-red-600 dark:text-red-400 mb-4">
-              {error || "Không tìm thấy bài viết"}
+              {error || t("articleNotFound")}
             </p>
             <Link
               href="/"
               className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
             >
               <ArrowLeft size={20} />
-              Quay lại trang chủ
+              {t("backHome")}
             </Link>
           </div>
         </main>
@@ -145,7 +147,7 @@ export default function NewsDetailPage() {
             className="inline-flex items-center gap-2 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
           >
             <ArrowLeft size={20} />
-            <span className="font-semibold">Quay lại</span>
+            <span className="font-semibold">{t("back")}</span>
           </Link>
           <span className="text-gray-400 dark:text-gray-600">/</span>
           <span className="text-gray-600 dark:text-gray-400">{news.category_label}</span>
@@ -217,7 +219,7 @@ export default function NewsDetailPage() {
               className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold"
             >
               <ArrowLeft size={20} />
-              Quay lại trang chủ
+              {t("backHome")}
             </Link>
           </div>
         </article>

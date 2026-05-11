@@ -1,3 +1,5 @@
+"use client";
+
 /**
  * NewsCard Component - Redesigned
  * Layout: Title (colored bg) -> Images (gallery - all images) -> Description
@@ -9,6 +11,7 @@
 import Link from "next/link";
 import { createSlugWithId } from "@/lib/slug";
 import ImageGallery from "./ImageGallery";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface NewsCardProps {
   id: number;
@@ -35,6 +38,8 @@ export default function NewsCard({
   author,
   title_bg_color = "#ef4444",
 }: NewsCardProps) {
+  const { locale } = useLanguage();
+
   // Category color mapping for fallback
   const categoryColors: Record<string, string> = {
     sports: "#ef4444",
@@ -63,7 +68,7 @@ export default function NewsCard({
   const formatDate = (dateString: string) => {
     try {
       const date = new Date(dateString);
-      return date.toLocaleDateString("vi-VN", {
+      return date.toLocaleDateString(locale, {
         year: "numeric",
         month: "short",
         day: "numeric",

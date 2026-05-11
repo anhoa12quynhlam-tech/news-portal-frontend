@@ -7,9 +7,11 @@ import LoadingCard from "@/components/LoadingCard";
 import { fetchNews, searchNews } from "@/lib/newsService";
 import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
 import { NewsItem } from "../../types/news";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function Home() {
   const searchParams = useSearchParams();
+  const { language, t, isReady } = useLanguage();
   const [news, setNews] = useState<NewsItem[]>([]);
   const [activeCategory, setActiveCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
@@ -28,7 +30,7 @@ export default function Home() {
 
   // Keep UI state strictly in sync with URL parameters.
   useEffect(() => {
-    if (!mounted) return;
+    if (!mounted || !isReady) return;
 
     const categoryParam = searchParams.get("category") || "all";
     const searchParam = searchParams.get("search") || "";
@@ -52,7 +54,7 @@ export default function Home() {
       setActiveCategory(categoryParam);
       loadNews(1, categoryParam, requestId);
     }
-  }, [searchParams, mounted]);
+  }, [searchParams, mounted, isReady, language]);
 
   // Load news function
   const loadNews = async (
@@ -64,7 +66,7 @@ export default function Home() {
 
     setIsLoading(true);
     try {
-      const result = await fetchNews(category, pageNum, 6);
+      const result = await fetchNews(category, pageNum, 6, language);
       if (requestId && requestId !== requestIdRef.current) return;
 
       if (!result || !Array.isArray(result.news)) {
@@ -100,7 +102,7 @@ export default function Home() {
 
     setIsLoading(true);
     try {
-      const result = await searchNews(query, pageNum, 6);
+      const result = await searchNews(query, pageNum, 6, language);
       if (requestId && requestId !== requestIdRef.current) return;
 
       if (!result || !Array.isArray(result.news)) {
@@ -145,7 +147,7 @@ export default function Home() {
         loadNews(page + 1, activeCategory);
       }
     }
-  }, [isLoading, hasMore, page, isSearching, searchQuery, activeCategory]);
+  }, [isLoading, hasMore, page, isSearching, searchQuery, activeCategory, language]);
 
   const { setObserverTarget } = useInfiniteScroll(handleLoadMore);
 
@@ -158,7 +160,7 @@ export default function Home() {
             <div className="hidden lg:block">
               <div className="sticky top-20 bg-muted rounded-lg p-4 h-96 flex items-center justify-center">
                 <p className="text-muted-foreground text-center">
-                  Advertisement Space
+                  {t("advertisementSpace")}
                 </p>
               </div>
             </div>
@@ -174,7 +176,7 @@ export default function Home() {
             <div className="hidden lg:block">
               <div className="sticky top-20 bg-muted rounded-lg p-4 h-96 flex items-center justify-center">
                 <p className="text-muted-foreground text-center">
-                  Advertisement Space
+                  {t("advertisementSpace")}
                 </p>
               </div>
             </div>
@@ -191,10 +193,10 @@ export default function Home() {
         {isSearching && (
           <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
             <p className="text-sm text-blue-900 dark:text-blue-100">
-              Kết quả tìm kiếm cho:{" "}
+              {t("searchResultsFor")} {" "}
               <span className="font-semibold">"{searchQuery}"</span>
               {news.length > 0 && (
-                <span> - Tìm thấy {news.length} bài viết</span>
+                <span> - {news.length} {t("foundArticles")}</span>
               )}
             </p>
           </div>
@@ -206,7 +208,7 @@ export default function Home() {
           <div className="hidden lg:block">
             <div className="sticky top-20 bg-muted rounded-lg p-4 h-96 flex items-center justify-center">
               <p className="text-muted-foreground text-center">
-                Advertisement Space
+                {t("advertisementSpace")}
               </p>
             </div>
           </div>
@@ -222,9 +224,7 @@ export default function Home() {
             ) : news.length === 0 ? (
               <div className="text-center py-12">
                 <p className="text-muted-foreground">
-                  {isSearching
-                    ? "Không tìm thấy bài viết nào"
-                    : "Không có bài viết"}
+                  {isSearching ? t("noSearchResults") : t("noArticles")}
                 </p>
               </div>
             ) : (
@@ -254,7 +254,7 @@ export default function Home() {
           <div className="hidden lg:block">
             <div className="sticky top-20 bg-muted rounded-lg p-4 h-96 flex items-center justify-center">
               <p className="text-muted-foreground text-center">
-                Advertisement Space
+                {t("advertisementSpace")}
               </p>
             </div>
           </div>

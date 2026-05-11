@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import { LanguageProvider } from "./contexts/LanguageContext";
 import { TooltipProvider } from "./components/ui/tooltip";
 import { Toaster } from "./components/ui/sonner";
 import ErrorBoundary from "./components/ErrorBoundary";
@@ -49,15 +50,17 @@ export default function RootLayout({
       <body className={`${geist.variable} ${geistMono.variable} antialiased`}>
         <ErrorBoundary>
           <ThemeProvider defaultTheme="light" switchable={true}>
-            <TooltipProvider>
-              <Toaster />
-              <ReloadToHome />
-              <Suspense fallback={null}>
-                <Header />
-              </Suspense>
-              {children}
-              <Footer />
-            </TooltipProvider>
+            <LanguageProvider>
+              <TooltipProvider>
+                <Toaster />
+                <ReloadToHome />
+                <Suspense fallback={null}>
+                  <Header />
+                </Suspense>
+                {children}
+                <Footer />
+              </TooltipProvider>
+            </LanguageProvider>
           </ThemeProvider>
         </ErrorBoundary>
       </body>

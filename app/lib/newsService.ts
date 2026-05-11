@@ -3,21 +3,13 @@
  * Handles fetching and filtering news data from backend API
  */
 
-interface NewsItem {
-  id: number;
-  title: string;
-  description: string;
-  category: string;
-  category_label: string;
-  image?: string;
-  images?: string[];
-  created_at: string;
-  author: string;
-  title_bg_color?: string;
-}
+import { NewsItem } from "../../types/news";
+
+export type Language = "vi" | "en";
 
 interface ApiResponse {
   success: boolean;
+  language?: Language;
   data: NewsItem[];
   pagination: {
     total: number;
@@ -30,16 +22,14 @@ interface ApiResponse {
 
 interface DetailApiResponse {
   success: boolean;
+  language?: Language;
   data: NewsItem;
 }
 
-// Backend API URL - Thay đổi nếu backend chạy ở port khác
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
-// Mock data - fallback nếu API không hoạt động
 let mockNewsData: NewsItem[] = [];
 
-// Initialize mock data
 async function initializeMockData(): Promise<NewsItem[]> {
   if (mockNewsData.length > 0) return mockNewsData;
 
@@ -50,6 +40,9 @@ async function initializeMockData(): Promise<NewsItem[]> {
       ...item,
       created_at: item.timestamp,
       category_label: item.categoryLabel,
+      title_vi: item.title,
+      description_vi: item.description,
+      category_label_vi: item.categoryLabel,
     }));
     return mockNewsData;
   } catch (error) {
@@ -58,39 +51,53 @@ async function initializeMockData(): Promise<NewsItem[]> {
   }
 }
 
-// Transform API response to match frontend format
-function transformApiData(apiItem: any): NewsItem {
+function localizeApiItem(apiItem: any, language: Language): NewsItem {
+  const isEnglish = language === "en";
+
   return {
     id: apiItem.id,
-    title: apiItem.title,
-    description: apiItem.description,
+    title: isEnglish ? apiItem.title_en || apiItem.title : apiItem.title_vi || apiItem.title,
+    description: isEnglish
+      ? apiItem.description_en || apiItem.description
+      : apiItem.description_vi || apiItem.description,
     category: apiItem.category,
-    category_label: apiItem.category_label,
+    category_label: isEnglish
+      ? apiItem.category_label_en || apiItem.category_label
+      : apiItem.category_label_vi || apiItem.category_label,
+    title_vi: apiItem.title_vi || apiItem.title,
+    title_en: apiItem.title_en,
+    description_vi: apiItem.description_vi || apiItem.description,
+    description_en: apiItem.description_en,
+    category_label_vi: apiItem.category_label_vi || apiItem.category_label,
+    category_label_en: apiItem.category_label_en,
     image: apiItem.image,
     images: apiItem.images,
     title_bg_color: apiItem.title_bg_color,
     created_at: apiItem.created_at,
+    updated_at: apiItem.updated_at,
     author: apiItem.author,
   };
+}
+
+function withLanguage(url: string, language: Language): string {
+  const separator = url.includes("?") ? "&" : "?";
+  return `${url}${separator}lang=${language}`;
 }
 
 export async function fetchNews(
   category: string = "all",
   page: number = 1,
   pageSize: number = 6,
+  language: Language = "vi",
 ): Promise<{ news: NewsItem[]; total: number; hasMore: boolean }> {
   try {
-    // Try to fetch from backend API
     let url = `${API_BASE_URL}/api/articles?page=${page}&per_page=${pageSize}`;
 
-    // If category is specified and not "all", use category endpoint
     if (category !== "all") {
       url = `${API_BASE_URL}/api/articles/category/${category}?page=${page}&per_page=${pageSize}`;
     }
 
-    console.log("Fetching from:", url);
-
-    const response = await fetch(url);
+    const response = await fetch(withLanguage(url, language));
 
     if (!response.ok) {
       throw new Error(`API error: ${response.status}`);
@@ -102,7 +109,7 @@ export async function fetchNews(
       throw new Error("Invalid API response");
     }
 
-    const transformedNews = data.data.map(transformApiData);
+    const transformedNews = data.data.map((item) => localizeApiItem(item, language));
 
     return {
       news: transformedNews,
@@ -110,24 +117,17 @@ export async function fetchNews(
       hasMore: data.pagination.has_more,
     };
   } catch (error) {
-    console.error(
-      "Failed to fetch from backend API, falling back to mock data:",
-      error,
-    );
+    console.error("Failed to fetch from backend API, falling back to mock data:", error);
 
-    // Fallback to mock data
     const allNews = await initializeMockData();
-
-    // Filter by category
     const filtered =
-      category === "all"
-        ? allNews
-        : allNews.filter((item) => item.category === category);
+      category === "all" ? allNews : allNews.filter((item) => item.category === category);
 
-    // Calculate pagination
     const startIndex = (page - 1) * pageSize;
     const endIndex = startIndex + pageSize;
-    const paginatedNews = filtered.slice(startIndex, endIndex);
+    const paginatedNews = filtered.slice(startIndex, endIndex).map((item) =>
+      localizeApiItem(item, language),
+    );
 
     return {
       news: paginatedNews,
@@ -137,13 +137,12 @@ export async function fetchNews(
   }
 }
 
-export async function fetchNewsDetail(id: number): Promise<NewsItem | null> {
+export async function fetchNewsDetail(
+  id: number,
+  language: Language = "vi",
+): Promise<NewsItem | null> {
   try {
-    // Try to fetch from backend API
-    const url = `${API_BASE_URL}/api/articles/${id}`;
-
-    console.log("Fetching detail from:", url);
-
+    const url = withLanguage(`${API_BASE_URL}/api/articles/${id}`, language);
     const response = await fetch(url);
 
     if (!response.ok) {
@@ -156,18 +155,14 @@ export async function fetchNewsDetail(id: number): Promise<NewsItem | null> {
       throw new Error("Invalid API response");
     }
 
-    return transformApiData(data.data);
+    return localizeApiItem(data.data, language);
   } catch (error) {
-    console.error(
-      "Failed to fetch detail from backend API, falling back to mock data:",
-      error,
-    );
+    console.error("Failed to fetch detail from backend API, falling back to mock data:", error);
 
-    // Fallback to mock data
     const allNews = await initializeMockData();
     const newsItem = allNews.find((item) => item.id === id);
 
-    return newsItem || null;
+    return newsItem ? localizeApiItem(newsItem, language) : null;
   }
 }
 
@@ -175,12 +170,13 @@ export async function searchNews(
   query: string,
   page: number = 1,
   pageSize: number = 6,
+  language: Language = "vi",
 ): Promise<{ news: NewsItem[]; total: number; hasMore: boolean }> {
   try {
-    // Try to fetch from backend API
-    const url = `${API_BASE_URL}/api/articles/search/${encodeURIComponent(query)}?page=${page}&per_page=${pageSize}`;
-
-    console.log("Searching from:", url);
+    const url = withLanguage(
+      `${API_BASE_URL}/api/articles/search/${encodeURIComponent(query)}?page=${page}&per_page=${pageSize}`,
+      language,
+    );
 
     const response = await fetch(url);
 
@@ -194,7 +190,7 @@ export async function searchNews(
       throw new Error("Invalid API response");
     }
 
-    const transformedNews = data.data.map(transformApiData);
+    const transformedNews = data.data.map((item) => localizeApiItem(item, language));
 
     return {
       news: transformedNews,
@@ -202,26 +198,24 @@ export async function searchNews(
       hasMore: data.pagination.has_more,
     };
   } catch (error) {
-    console.error(
-      "Failed to search from backend API, falling back to mock data:",
-      error,
-    );
+    console.error("Failed to search from backend API, falling back to mock data:", error);
 
-    // Fallback to mock data
     const allNews = await initializeMockData();
     const lowerQuery = query.toLowerCase();
 
-    // Search in title and description
-    const filtered = allNews.filter(
-      (item) =>
-        item.title.toLowerCase().includes(lowerQuery) ||
-        item.description.toLowerCase().includes(lowerQuery),
-    );
+    const filtered = allNews.filter((item) => {
+      const localizedItem = localizeApiItem(item, language);
+      return (
+        localizedItem.title.toLowerCase().includes(lowerQuery) ||
+        localizedItem.description.toLowerCase().includes(lowerQuery)
+      );
+    });
 
-    // Calculate pagination
     const startIndex = (page - 1) * pageSize;
     const endIndex = startIndex + pageSize;
-    const paginatedNews = filtered.slice(startIndex, endIndex);
+    const paginatedNews = filtered
+      .slice(startIndex, endIndex)
+      .map((item) => localizeApiItem(item, language));
 
     return {
       news: paginatedNews,
@@ -231,11 +225,4 @@ export async function searchNews(
   }
 }
 
-export const CATEGORIES = [
-  { id: "all", label: "Tất Cả" },
-  { id: "sports", label: "Thể Thao" },
-  { id: "economy", label: "Kinh Tế" },
-  { id: "politics", label: "Chính Trị" },
-  { id: "society", label: "Xã Hội" },
-  { id: "humor", label: "Hài Hước" },
-];
+export const CATEGORY_IDS = ["all", "sports", "economy", "politics", "society", "humor"] as const;

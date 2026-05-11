@@ -3,8 +3,9 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Menu, X, Search, Moon, Sun } from "lucide-react";
+import { Menu, X, Search, Moon, Sun, Languages } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import Image from "next/image";
 
 interface HeaderProps {
@@ -20,6 +21,7 @@ export default function Header({
   const [searchQuery, setSearchQuery] = useState("");
 
   const { theme, toggleTheme, switchable } = useTheme();
+  const { language, setLanguage, t } = useLanguage();
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -29,12 +31,12 @@ export default function Header({
     : searchParams.get("category") || "all";
 
   const navigationItems = [
-    { id: "all", label: "Tất Cả" },
-    { id: "sports", label: "Thể Thao" },
-    { id: "economy", label: "Kinh Tế" },
-    { id: "politics", label: "Chính Trị" },
-    { id: "society", label: "Xã Hội" },
-    { id: "humor", label: "Hài Hước" },
+    { id: "all", label: t("all") },
+    { id: "sports", label: t("sports") },
+    { id: "economy", label: t("economy") },
+    { id: "politics", label: t("politics") },
+    { id: "society", label: t("society") },
+    { id: "humor", label: t("humor") },
   ];
 
   const getCategoryHref = (categoryId: string) => {
@@ -68,10 +70,6 @@ export default function Header({
     if (onCategoryChange) {
       onCategoryChange(categoryId);
     }
-
-    // Không gọi router.push ở đây.
-    // Link href sẽ tự điều hướng để tránh double navigation
-    // và tránh lỗi bị kẹt sau khi reload tại URL search.
   };
 
   const handleLogoClick = () => {
@@ -82,20 +80,21 @@ export default function Header({
       onCategoryChange("all");
     }
 
-    // Không gọi router.push("/") ở đây.
-    // Link href="/" đã xử lý điều hướng.
     window.scrollTo({
       top: 0,
       behavior: "smooth",
     });
   };
 
+  const toggleLanguage = () => {
+    setLanguage(language === "vi" ? "en" : "vi");
+    setIsMenuOpen(false);
+  };
+
   return (
     <header className="sticky top-0 z-50 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 shadow-sm">
       <div className="container mx-auto px-4">
-        {/* Top Bar */}
         <div className="flex items-center justify-between py-4">
-          {/* Logo */}
           <Link
             href="/"
             className="flex items-center gap-2 flex-shrink-0"
@@ -116,7 +115,6 @@ export default function Header({
             </span>
           </Link>
 
-          {/* Search Bar - Desktop */}
           <form
             onSubmit={handleSearch}
             className="hidden md:flex flex-1 max-w-md mx-6"
@@ -124,7 +122,7 @@ export default function Header({
             <div className="relative w-full">
               <input
                 type="text"
-                placeholder="Tìm kiếm tin tức..."
+                placeholder={t("searchPlaceholder")}
                 value={searchQuery}
                 onChange={handleSearchChange}
                 className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -139,9 +137,18 @@ export default function Header({
             </div>
           </form>
 
-          {/* Right Actions */}
-          <div className="flex items-center gap-3">
-            {/* Theme Toggle */}
+          <div className="flex items-center gap-2 sm:gap-3">
+            <button
+              onClick={toggleLanguage}
+              className="inline-flex items-center gap-1 rounded-lg border border-gray-200 px-2 py-2 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-100 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800 sm:px-3"
+              aria-label={t("toggleLanguage")}
+              type="button"
+              title={t("toggleLanguage")}
+            >
+              <Languages size={18} />
+              <span>{language.toUpperCase()}</span>
+            </button>
+
             {switchable && toggleTheme && (
               <button
                 onClick={toggleTheme}
@@ -160,7 +167,6 @@ export default function Header({
               </button>
             )}
 
-            {/* Mobile Menu Toggle */}
             <button
               onClick={() => setIsMenuOpen((prev) => !prev)}
               className="md:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
@@ -176,7 +182,6 @@ export default function Header({
           </div>
         </div>
 
-        {/* Navigation Bar - Desktop */}
         <nav className="hidden md:flex items-center gap-1 pb-0 overflow-x-auto">
           {navigationItems.map((item) => (
             <Link
@@ -194,15 +199,13 @@ export default function Header({
           ))}
         </nav>
 
-        {/* Mobile Menu */}
         {isMenuOpen && (
           <div className="md:hidden pb-4 border-t border-gray-200 dark:border-gray-800 mt-4">
-            {/* Mobile Search */}
-            <form onSubmit={handleSearch} className="mb-4">
+            <form onSubmit={handleSearch} className="mb-4 pt-4">
               <div className="relative">
                 <input
                   type="text"
-                  placeholder="Tìm kiếm tin tức..."
+                  placeholder={t("searchPlaceholder")}
                   value={searchQuery}
                   onChange={handleSearchChange}
                   className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -217,7 +220,6 @@ export default function Header({
               </div>
             </form>
 
-            {/* Mobile Navigation */}
             <nav className="flex flex-col gap-2">
               {navigationItems.map((item) => (
                 <Link
